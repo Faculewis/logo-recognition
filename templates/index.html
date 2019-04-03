@@ -1,0 +1,353 @@
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="description" content="Proyectp de deteccion de logos">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  <title>Logo Detection</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+
+  <!-- Add to homescreen for Chrome on Android -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="icon" sizes="192x192" href="{{ url_for('static', filename='images/android-desktop.png') }}">
+
+  <!-- Add to homescreen for Safari on iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-title" content="Logo Detection">
+  <link rel="apple-touch-icon-precomposed" href="{{ url_for('static', filename='images/ios-desktop.png') }}">
+
+  <!-- Tile icon for Win8 (144x144 + tile color) -->
+  <meta name="msapplication-TileImage" content="images/touch/ms-touch-icon-144x144-precomposed.png">
+  <meta name="msapplication-TileColor" content="#3372DF">
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:regular,bold,italic,thin,light,bolditalic,black,medium&amp;lang=en">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+  <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.grey-orange.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+  <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <style>
+    #view-source {
+      position: fixed;
+      display: block;
+      right: 0;
+      bottom: 0;
+      margin-right: 40px;
+      margin-bottom: 40px;
+      z-index: 900;
+    }
+  </style>
+</head>
+<body>
+<div class="demo-blog mdl-layout mdl-js-layout has-drawer is-upgraded">
+  <main class="mdl-layout__content">
+    <div class="middle">
+      <div class="demo-blog__posts mdl-grid">
+        <div class="mdl-card mdl-shadow--8dp coffee-pic mdl-cell mdl-cell--12-col">
+          <div id="image-container" class="mdl-card__supporting-text meta mdl-color-text--grey-600">
+            <!--<div class="minilogo"></div>-->
+
+              <video src="" id="video" style="width:100%;height:auto;" autoplay="true"></video>
+              <!-- El canvas obtine las imagenes de la camara que se transmiten -->
+              <canvas style="display:none;" id="preview"></canvas>
+              <!-- para saber si la camara esta activa -->
+
+              <!--<img id="play">-->
+              <div id="segmentation">
+                <img id="segmentation-img" src="data:image/png;base64,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" style="display: none;"/>
+              </div>
+
+          </div>
+        </div>
+        {#<div class="mdl-card something-else mdl-cell mdl-cell--8-col mdl-cell--4-col-desktop">
+          <!--<button class="mdl-button mdl-js-ripple-effect mdl-js-button mdl-button&#45;&#45;fab mdl-color&#45;&#45;accent">
+            <i class="material-icons mdl-color-text&#45;&#45;white" role="presentation">add</i>
+            <span class="visuallyhidden">add</span>
+          </button>-->
+          <div class="mdl-card__media mdl-color--white mdl-color-text--grey-600 display-3">
+            <div id = "logger"></div>
+            <img id="logo-image" style="display: none"/>
+          </div>
+          <div class="mdl-card__actions mdl-card--border">
+            <span class="mdl-color-text--grey-600 subheading">
+              Confidence:
+            </span>
+            <span id="confidence"></span>
+          </div>
+        </div>#}
+      </div>
+    </div>
+  </main>
+  <div class="mdl-layout__obfuscator"></div>
+</div>
+  <script src="https://code.getmdl.io/1.3.0/material.min.js"></script>
+
+  <script type="text/javascript">
+      var canvas = document.getElementById("preview");
+      var context = canvas.getContext("2d");
+
+
+      context.width = canvas.width;
+      context.height = canvas.height;
+
+      var video = document.getElementById("video");
+
+      function resolvePrediction (result) {
+          if (result) {
+              if (result.category) {
+                  //logger(result.category);
+                  logCattegory(result.category);
+                  $("#confidence").text(result.confidence);
+
+                  // logger(JSON.stringify(result));
+              }
+              if (result.image) {
+                  $("#segmentation-img").show();
+                  $("#segmentation-img").attr("src", "data:image/png;base64," + result.image);
+              }
+          }
+      }
+
+      function logCattegory(category) {
+          let result = 'No hay logo';
+
+          $("#logo-image").attr("src","");
+          $("#logo-image").hide();
+
+          $("#logo-image").css('width', '100%');
+          $("#logo-image").css('height', 'auto');
+          switch (category) {
+              case 0:
+                  result = 'HP';
+                  $("#logo-image").attr("src", '/static/images/hp.png');
+                  $("#logo-image").show();
+                  break;
+              case 1:
+                  result = 'Adidas';
+                  $("#logo-image").attr("src", "/static/images/adidas.png");
+                  $("#logo-image").show();
+                  break;
+              case 2:
+                  result = 'Aldi';
+                  $("#logo-image").attr("src", '/static/images/aldi.jpeg');
+                  $("#logo-image").show();
+                  break;
+              case 3:
+                  result = 'Apple';
+                  $("#logo-image").attr("src", '/static/images/apple.jpg');
+                  $("#logo-image").show();
+                  break;
+              case 4:
+                  result = 'Becks';
+                  $("#logo-image").attr("src", '/static/images/becks.png');
+                  $("#logo-image").show();
+                  break;
+              case 5:
+                  result = 'BMW';
+                  $("#logo-image").attr("src", '/static/images/bmw.jpeg');
+                  $("#logo-image").show();
+                  break;
+              case 6:
+                  result = 'Carlsberg';
+                  $("#logo-image").attr("src", '/static/images/carlsberg.jpeg');
+                  $("#logo-image").show();
+                  break;
+              case 7:
+                  result = 'Chimay';
+                  $("#logo-image").attr("src", '/static/images/chimay.png');
+                  $("#logo-image").show();
+                  break;
+              case 8:
+                  result = 'Coca Cola';
+                  $("#logo-image").attr("src", '/static/images/cocacola.png');
+                  $("#logo-image").show();
+                  break;
+              case 9:
+                  result = 'Corona';
+                  $("#logo-image").attr("src", '/static/images/corona.png');
+                  $("#logo-image").show();
+                  break;
+              case 10:
+                  result = 'DHL';
+                  $("#logo-image").attr("src", '/static/images/dhl.png');
+                  $("#logo-image").show();
+                  break;
+              case 11:
+                  result = 'Erdinger';
+                  $("#logo-image").attr("src", '/static/images/erdinger.jpeg');
+                  $("#logo-image").show();
+                  break;
+              case 12:
+                  result = 'Esso';
+                  $("#logo-image").attr("src", '/static/images/esso.png');
+                  $("#logo-image").show();
+                  break;
+              case 13:
+                  result = 'Fedex';
+                  $("#logo-image").attr("src", '/static/images/fedex.png');
+                  $("#logo-image").show();
+                  break;
+              case 14:
+                  result = 'Ferrari';
+                  $("#logo-image").attr("src", '/static/images/ferrari.png');
+                  $("#logo-image").show();
+                  break;
+              case 15:
+                  result = 'Ford';
+                  $("#logo-image").attr("src", '/static/images/ford.png');
+                  $("#logo-image").show();
+                  break;
+              case 16:
+                  result = "Foster's";
+                  $("#logo-image").attr("src", '/static/images/fosters.jpg');
+                  $("#logo-image").show();
+                  break;
+              case 17:
+                  result = 'Google';
+                  $("#logo-image").attr("src", '/static/images/google.png');
+                  $("#logo-image").show();
+                  break;
+              case 18:
+                  result = 'Guinness';
+                  $("#logo-image").attr("src", '/static/images/guinness.jpg');
+                  $("#logo-image").show();
+                  break;
+              case 19:
+                  result = 'Heineken';
+                  $("#logo-image").attr("src", '/static/images/heineken.jpg');
+                  $("#logo-image").show();
+                  break;
+              case 20:
+                  result = 'Milka';
+                  $("#logo-image").attr("src", '/static/images/milka.png');
+                  $("#logo-image").show();
+                  break;
+              case 23:
+                  result = 'Nvidia';
+                  $("#logo-image").attr("src", '/static/images/nvidia.png');
+                  $("#logo-image").show();
+                  break;
+              case 24:
+                  result = 'Paulaner';
+                  $("#logo-image").attr("src", '/static/images/paulaner.png');
+                  $("#logo-image").show();
+                  break;
+              case 25:
+                  result = 'Pepsi';
+                  $("#logo-image").attr("src", '/static/images/pepsi.jpg');
+                  $("#logo-image").show();
+                  break;
+              case 26:
+                  result = 'Ritter Sport';
+                  $("#logo-image").attr("src", '/static/images/ritter.png');
+                  $("#logo-image").show();
+                  break;
+              case 27:
+                  result = 'Shell';
+                  $("#logo-image").attr("src", '/static/images/shell.png');
+                  $("#logo-image").show();
+                  break;
+              case 28:
+                  result = 'Singha';
+                  $("#logo-image").attr("src", '/static/images/singha.jpeg');
+                  $("#logo-image").show();
+                  break;
+              case 29:
+                  result = 'Starbucks';
+                  $("#logo-image").attr("src", '/static/images/starbucks.jpeg');
+                  $("#logo-image").show();
+                  break;
+              case 30:
+                  result = 'Stella Artois';
+                  $("#logo-image").attr("src", '/static/images/stella.png');
+                  $("#logo-image").show();
+                  break;
+              case 31:
+                  result = 'Texaco';
+                  $("#logo-image").attr("src", '/static/images/texaco.jpeg');
+                  $("#logo-image").show();
+                  break;
+              case 32:
+                  result = 'Tsingtao';
+                  $("#logo-image").attr("src", '/static/images/tsingtao.png');
+                  $("#logo-image").show();
+                  break;
+              case 33:
+                  result = 'UPS';
+                  $("#logo-image").attr("src", '/static/images/ups.jpeg');
+                  $("#logo-image").show();
+                  break;
+
+              default:
+                  result = 'No hay logo';
+          }
+          logger(result)
+
+      }
+
+      function logger(msg) {
+          $("#logger").text(msg);
+      }
+
+      function loadCam(stream)
+      {
+          video.srcObject = stream;
+
+          // video.src = window.URL.createObjectURL(stream);
+          logger('Camara cargada correctamente!');
+      }
+
+      function loadFail()
+      {
+          logger('Camara no encontrada, revise la camara');
+      }
+
+      function viewVideo(video,context)
+      {
+          context.drawImage(video,0,0, canvas.width, canvas.height) //, 160, 160);
+          //para trasmitir las imagenes como cadena,  webp es un formato parecido a png
+          let img = canvas.toDataURL('image/jpeg');
+
+          $.ajax({
+              url: 'http://127.0.0.1:5000/predict',
+              data: { img },
+              type: 'POST',
+              success: function(response) {
+                  console.log(response)
+                  resolvePrediction(response)
+              },
+              error: function(error) {
+                  console.log(error);
+              }
+          });
+      }
+
+      $(function(){
+          navigator.getUserMedia= (navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msgGetUserMedia);
+          if(navigator.getUserMedia)
+          {
+              navigator.getUserMedia({video : true},loadCam,loadFail);
+          }
+          setInterval(function(){
+              viewVideo(video,context);
+          }, 400);
+          // }, 400);
+      });
+  </script>
+  <canvas class="background"></canvas>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/particlesjs/2.2.2/particles.min.js"></script>
+  <script>
+      window.onload = function() {
+          Particles.init({
+              selector: '.background',
+              color: '#ffffff',
+              connectParticles: true
+          });
+      };
+</script>
+</body>
+</html>
